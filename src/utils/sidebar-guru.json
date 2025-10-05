@@ -1,0 +1,40 @@
+    [
+    {
+        "type": "section",
+        "title": "Home"
+    },
+    {
+        "type": "item",
+        "title": "Dashboard",
+        "icon": "ti ti-layout-dashboard",
+        "link": "dashboard"
+    },
+    {
+        "type": "section",
+        "title": "Feature"
+    },
+    {
+        "type": "item",
+        "title": "DUDI",
+        "icon": "ti ti-building ",
+        "link": "dudi"
+    },
+    {
+        "type": "item",
+        "title": "Magang",
+        "icon": "ti ti-briefcase",
+        "link": "magang"
+    },
+    {
+        "type": "item",
+        "title": "Jurnal Harian",
+        "icon": "ti ti-notebook",
+        "link": "jurnal-harian"
+    },
+    {
+        "type": "item",
+        "title": "Approval",
+        "icon": "ti ti-check",
+        "link": "approval"
+    }
+    ]

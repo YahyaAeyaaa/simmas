@@ -1,0 +1,163 @@
+// ================================
+// schema.prisma - SIMMAS Final UBIG
+// ================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================================
+// Enums
+// ================================
+
+enum Role {
+  admin
+  siswa
+  guru
+}
+
+enum DudiStatus {
+  aktif
+  nonaktif
+  pending
+}
+
+enum MagangStatus {
+  pending
+  diterima
+  ditolak
+  berlangsung
+  selesai
+  dibatalkan
+}
+
+enum LogbookStatus {
+  pending
+  disetujui
+  ditolak
+}
+
+// ================================
+// Models
+// ================================
+
+model User {
+  id              Int       @id @default(autoincrement())
+  name            String
+  email           String    @unique
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  password        String
+  role            Role
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // relasi ke detail sesuai role
+  siswa Siswa?
+  guru  Guru?
+  dudi  Dudi?
+}
+
+model Siswa {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int      @unique
+  nama      String
+  nis       String   @unique
+  kelas     String
+  jurusan   String
+  alamat    String
+  telepon   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  magang Magang[]
+}
+
+model Guru {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int      @unique
+  nip       String   @unique
+  nama      String
+  alamat    String
+  telepon   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  magang Magang[]
+}
+
+model Dudi {
+  id               Int       @id @default(autoincrement())
+  user             User?     @relation(fields: [userId], references: [id])
+  userId           Int?      @unique
+  namaPerusahaan   String
+  alamat           String
+  telepon          String
+  email            String
+  penanggungJawab  String
+  bidangUsaha      String?   @map("bidang_usaha")
+  deskripsi        String?
+  kuotaMagang      Int?      @default(0) @map("kuota_magang")
+  status           DudiStatus
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  magang Magang[]
+}
+
+model Magang {
+  id             Int      @id @default(autoincrement())
+  siswa          Siswa    @relation(fields: [siswaId], references: [id])
+  siswaId        Int
+  dudi           Dudi     @relation(fields: [dudiId], references: [id])
+  dudiId         Int
+  guru           Guru     @relation(fields: [guruId], references: [id])
+  guruId         Int
+  status         MagangStatus
+  nilaiAkhir     Float?   @map("nilai_akhir")
+  tanggalMulai   DateTime @map("tanggal_mulai")
+  tanggalSelesai DateTime @map("tanggal_selesai")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  logbooks Logbook[]
+}
+
+model Logbook {
+  id               Int          @id @default(autoincrement())
+  magang           Magang       @relation(fields: [magangId], references: [id])
+  magangId         Int
+  tanggal          DateTime
+  kegiatan         String
+  kendala          String
+  file             String
+  statusVerifikasi LogbookStatus @map("status_verifikasi")
+  catatanGuru      String?
+  catatanDudi      String?
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+}
+
+// ================================
+// Optional: Pengaturan Sekolah
+// ================================
+
+model SchoolSettings {
+  id            Int      @id @default(autoincrement())
+  logoUrl       String?  @map("logo_url")
+  namaSekolah   String?  @map("nama_sekolah")
+  alamat        String?
+  telepon       String?
+  email         String?
+  website       String?
+  kepalaSekolah String?  @map("kepala_sekolah")
+  npsn          String?  @unique
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+}

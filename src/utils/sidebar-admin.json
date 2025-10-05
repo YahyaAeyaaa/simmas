@@ -1,0 +1,34 @@
+[
+  {
+    "type": "section",
+    "title": "Home"
+  },
+  {
+    "type": "item",
+    "title": "Dashboard",
+    "icon": "ti ti-layout-dashboard",
+    "link": "dashboard"
+  },
+  {
+    "type": "section",
+    "title": "Feature"
+  },
+  {
+    "type": "item",
+    "title": "DUDI",
+    "icon": "ti ti-building ",
+    "link": "dudi"
+  },
+  {
+    "type": "item",
+    "title": "Pengguna",
+    "icon": "ti ti-users",
+    "link": "pengguna"
+  },
+  {
+    "type": "item",
+    "title": "Pengaturan",
+    "icon": "ti ti-id-badge",
+    "link": "pengaturan"
+  }
+]

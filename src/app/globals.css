@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-:root {
+/* /* :root {
   --background: #ffffff;
   --foreground: #171717;
-}
+} 
 
 @theme inline {
   --color-background: var(--background);
@@ -22,5 +22,14 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* font-ily: Arial,fam Helvetica, sans-serif; */
+
+
+@theme {
+  --font-family-sans: var(--font-inter), system-ui, sans-serif;
+  --font-family-poppins: var(--font-poppins), sans-serif;
+  --font-family-roboto: var(--font-roboto), sans-serif;
+  --font-family-montserrat: var(--font-montserrat), sans-serif;
+  --font-family-open-sans: var(--font-open-sans), sans-serif;
+  --font-family-plus-jakarta: var(--font-plus-jakarta), sans-serif;
 }
