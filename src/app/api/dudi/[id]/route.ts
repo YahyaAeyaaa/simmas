@@ -4,10 +4,11 @@ import { prisma } from '@/app/lib/db/prisma';
 // GET single dudi by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const dudiId = parseInt(params.id);
+    const { id } = await params;
+    const dudiId = parseInt(id);
     
     if (isNaN(dudiId)) {
       return NextResponse.json(
@@ -25,6 +26,13 @@ export async function GET(
         _count: {
           select: {
             magang: true
+          }
+        },
+        guruPenanggungJawab: {
+          select: {
+            id: true,
+            nama: true,
+            nip: true
           }
         }
       }
@@ -52,7 +60,9 @@ export async function GET(
       deskripsi: dudi.deskripsi,
       kuotaMagang: dudi.kuotaMagang,
       status: dudi.status,
-      jumlahSiswaMagang: dudi._count.magang
+      jumlahSiswaMagang: dudi._count.magang,
+      guruPenanggungJawabId: dudi.guruPenanggungJawabId,
+      guruPenanggungJawab: dudi.guruPenanggungJawab
     };
 
     return NextResponse.json({
@@ -75,10 +85,11 @@ export async function GET(
 // PUT update dudi by ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const dudiId = parseInt(params.id);
+    const { id } = await params;
+    const dudiId = parseInt(id);
     
     if (isNaN(dudiId)) {
       return NextResponse.json(
@@ -100,7 +111,8 @@ export async function PUT(
       bidangUsaha,
       deskripsi,
       kuotaMagang,
-      status 
+      status,
+      guruPenanggungJawabId
     } = body;
 
     // Validate required fields
@@ -159,7 +171,8 @@ export async function PUT(
         bidangUsaha,
         deskripsi,
         kuotaMagang,
-        status: status as 'aktif' | 'nonaktif' | 'pending'
+        status: status as 'aktif' | 'nonaktif' | 'pending',
+        guruPenanggungJawabId: guruPenanggungJawabId || null
       },
       include: {
         _count: {
@@ -206,10 +219,11 @@ export async function PUT(
 // DELETE dudi by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const dudiId = parseInt(params.id);
+    const { id } = await params;
+    const dudiId = parseInt(id);
     
     if (isNaN(dudiId)) {
       return NextResponse.json(

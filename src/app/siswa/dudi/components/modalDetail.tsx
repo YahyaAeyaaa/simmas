@@ -1,7 +1,7 @@
 // File: components/modal/ModalDetailTempatMagang.tsx
 "use client";
 
-import { X, MapPin, Phone, Mail, User } from "lucide-react";
+import { X, MapPin, Phone, Mail, User, GraduationCap } from "lucide-react";
 
 interface ModalDetailTempatMagangProps {
     isOpen: boolean;
@@ -19,6 +19,10 @@ interface ModalDetailTempatMagangProps {
         slotTerisi: number;
         slotTotal: number;
         sudahDaftar: boolean;
+        guruPenanggungJawab?: {
+            nama: string;
+            nip: string;
+        } | null;
     };
 }
 
@@ -106,6 +110,17 @@ export default function ModalDetailTempatMagang({
                                     <p className="text-gray-700">{data.penanggungJawab}</p>
                                 </div>
                             </div>
+
+                            {data.guruPenanggungJawab && (
+                                <div className="flex items-start gap-2 text-sm bg-green-50 p-2 rounded-xl border border-green-200">
+                                    <GraduationCap size={18} className="text-green-600 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-green-700 text-xs mb-0.5 font-medium">Guru Penanggung Jawab</p>
+                                        <p className="text-green-800 font-semibold">{data.guruPenanggungJawab.nama}</p>
+                                        <p className="text-green-600 text-xs">NIP: {data.guruPenanggungJawab.nip}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -127,6 +142,15 @@ export default function ModalDetailTempatMagang({
                                     {data.slotTotal - data.slotTerisi} slot
                                 </span>
                             </div>
+                            
+                            {data.guruPenanggungJawab && (
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600">Guru Pembimbing</span>
+                                    <span className="font-semibold text-green-600">
+                                        Auto-assign ke {data.guruPenanggungJawab.nama}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

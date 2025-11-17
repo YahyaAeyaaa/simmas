@@ -28,8 +28,59 @@ export interface SingleSiswaDudiResponse {
   error?: string;
 }
 
+export interface MagangRegistrationData {
+  id: number;
+  dudi: {
+    namaPerusahaan: string;
+    alamat: string;
+    bidangUsaha: string;
+  };
+  guru: {
+    nama: string;
+    nip: string;
+  };
+  status: 'pending' | 'berlangsung' | 'selesai';
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  nilaiAkhir: number | null;
+  createdAt: string;
+}
+
+export interface MagangRegistrationResponse {
+  success: boolean;
+  data: MagangRegistrationData[];
+  error?: string;
+}
+
+export interface MagangRegistrationRequest {
+  success: boolean;
+  message: string;
+  data: {
+    id: number;
+    siswa: {
+      nama: string;
+      nis: string;
+      kelas: string;
+      jurusan: string;
+    };
+    dudi: {
+      namaPerusahaan: string;
+      alamat: string;
+    };
+    guru: {
+      nama: string;
+      nip: string;
+    };
+    status: string;
+    tanggalMulai: string;
+    tanggalSelesai: string;
+  };
+  error?: string;
+}
+
 class SiswaDudiService {
   private baseUrl = '/api/siswa/dudi';
+  private magangUrl = '/api/siswa/magang';
 
   // Get all dudi for siswa
   async getDudiList(search = ''): Promise<SiswaDudiResponse> {
@@ -73,6 +124,57 @@ class SiswaDudiService {
         success: false,
         data: {} as SiswaDudiData,
         error: error instanceof Error ? error.message : 'Failed to fetch dudi'
+      };
+    }
+  }
+  
+  async daftarMagang(dudiId: number): Promise<MagangRegistrationRequest> {
+    try {
+      const response = await fetch(this.magangUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dudiId
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to register for magang');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error registering for magang:', error);
+      return {
+        success: false,
+        message: '',
+        data: {} as any,
+        error: error instanceof Error ? error.message : 'Failed to register for magang'
+      };
+    }
+  }
+
+  // Get student's magang registrations
+  async getMagangRegistrations(): Promise<MagangRegistrationResponse> {
+    try {
+      const response = await fetch(this.magangUrl);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch magang registrations');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching magang registrations:', error);
+      return {
+        success: false,
+        data: [],
+        error: error instanceof Error ? error.message : 'Failed to fetch magang registrations'
       };
     }
   }

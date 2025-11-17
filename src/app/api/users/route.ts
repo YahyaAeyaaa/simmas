@@ -1,125 +1,68 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/db/prisma';
+// app/api/users/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/app/lib/db/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search') || '';
-    const role = searchParams.get('role') || '';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const url = new URL(request.url);
+    const search = (url.searchParams.get("search") || "").trim();
+    const role = (url.searchParams.get("role") || "").trim();
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+    const limit = Math.max(1, parseInt(url.searchParams.get("limit") || "10", 10));
+    const skip = (page - 1) * limit;
 
-    // Build where clause for search and role filter
-    const whereClause: {
-      OR?: Array<{
-        name?: { contains: string; mode: 'insensitive' };
-        email?: { contains: string; mode: 'insensitive' };
-        siswa?: { nama: { contains: string; mode: 'insensitive' } };
-        guru?: { nama: { contains: string; mode: 'insensitive' } };
-        dudi?: { namaPerusahaan: { contains: string; mode: 'insensitive' } };
-      }>;
-      role?: string;
-    } = {};
-    
+    const where: any = {};
+    if (role) where.role = role;
     if (search) {
-      whereClause.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { siswa: { nama: { contains: search, mode: 'insensitive' } } },
-        { guru: { nama: { contains: search, mode: 'insensitive' } } },
-        { dudi: { namaPerusahaan: { contains: search, mode: 'insensitive' } } }
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
       ];
     }
 
-    if (role) {
-      whereClause.role = role;
-    }
+    const [items, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        include: { siswa: true, guru: true, dudi: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit
+      }),
+      prisma.user.count({ where })
+    ]);
 
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-
-    // Get total count for pagination
-    const totalCount = await prisma.user.count({
-      where: whereClause
-    });
-
-    // Get users with pagination
-    const users = await prisma.user.findMany({
-      where: whereClause,
-      include: {
-        siswa: true,
-        guru: true,
-        dudi: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      skip,
-      take: limit
-    });
-
-    // Transform data to match frontend interface
-    const transformedUsers = users.map(user => {
-      let displayName = user.name;
-      let displayId = user.id.toString();
-
-      // Get display name and ID based on role
-      if (user.role === 'siswa' && user.siswa) {
-        displayName = user.siswa.nama;
-        displayId = user.siswa.nis;
-      } else if (user.role === 'guru' && user.guru) {
-        displayName = user.guru.nama;
-        displayId = user.guru.nip;
-      } else if (user.role === 'admin') {
-        displayName = user.name;
-        displayId = user.id.toString();
-      } else if (user.dudi) {
-        displayName = user.dudi.namaPerusahaan;
-        displayId = user.id.toString();
-      }
-
+    // Map to frontend shape (match fields your frontend expects)
+    const data = items.map(u => {
+      const role = u.role;
+      const isDudi = !!u.dudi;
+      const displayName = isDudi ? u.dudi!.namaPerusahaan : u.name;
       return {
-        id: user.id,
+        id: u.id,
+        id_user: u.id,
         namaPerusahaan: displayName,
-        id_user: displayId,
-        email: user.email,
-        verifed_at: user.emailVerifiedAt ? 'Verified' : 'Unverified',
-        penanggungJawab: displayName,
-        status: user.role,
-        Terdaftar_pada: user.createdAt.toLocaleDateString('id-ID', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric'
-        })
+        email: u.email,
+        status: role,
+        verifed_at: u.emailVerifiedAt ? "verified" : "unverified",
+        Terdaftar_pada: u.createdAt.toISOString(),
+        jurusan: u.siswa?.jurusan ?? null,
+        kelas: u.siswa?.kelas ?? null,
+        // keep full nested objects in case needed
+        _raw: { user: u }
       };
     });
 
-    // Calculate pagination info
-    const totalPages = Math.ceil(totalCount / limit);
-    const hasNextPage = page < totalPages;
-    const hasPrevPage = page > 1;
-
+    
     return NextResponse.json({
       success: true,
-      data: transformedUsers,
+      data,
       pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems: totalCount,
-        itemsPerPage: limit,
-        hasNextPage,
-        hasPrevPage
+        totalItems: total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page
       }
     });
-
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to fetch users' 
-      },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error("GET users error", err);
+    return NextResponse.json({ success: false, error: "Gagal memuat users" }, { status: 500 });
   }
 }

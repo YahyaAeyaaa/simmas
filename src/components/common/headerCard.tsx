@@ -19,7 +19,7 @@ const HeaderCard = ({
     <div 
       className={`rounded-xl shadow-md p-6 ${
         variant === 'gradient' 
-          ? 'bg-gradient-to-r from-[#970747] to-[#C21563]' 
+          ? 'bg-gradient-to-r from-cyan-500 to-sky-600' 
           : 'bg-[#970747]'
       }`}
     >

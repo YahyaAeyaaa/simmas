@@ -38,13 +38,26 @@ export async function GET(request: NextRequest) {
       where: whereClause
     });
 
-    // Get dudi with pagination and include magang count
+    // Get dudi with pagination and include active magang count
     const dudiList = await prisma.dudi.findMany({
       where: whereClause,
       include: {
         _count: {
           select: {
-            magang: true
+            magang: {
+              where: {
+                status: {
+                  in: ['pending', 'berlangsung']
+                }
+              }
+            }
+          }
+        },
+        guruPenanggungJawab: {
+          select: {
+            id: true,
+            nama: true,
+            nip: true
           }
         }
       },
@@ -67,7 +80,9 @@ export async function GET(request: NextRequest) {
       deskripsi: dudi.deskripsi,
       kuotaMagang: dudi.kuotaMagang,
       status: dudi.status,
-      jumlahSiswaMagang: dudi._count.magang
+      jumlahSiswaMagang: dudi._count.magang,
+      guruPenanggungJawabId: dudi.guruPenanggungJawabId,
+      guruPenanggungJawab: dudi.guruPenanggungJawab
     }));
 
     // Calculate pagination info
@@ -113,7 +128,8 @@ export async function POST(request: NextRequest) {
       bidangUsaha,
       deskripsi,
       kuotaMagang,
-      status = 'pending' 
+      status = 'pending',
+      guruPenanggungJawabId
     } = body;
     
     if (!namaPerusahaan || !alamat || !telepon || !email || !penanggungJawab || !bidangUsaha || !deskripsi || kuotaMagang === undefined || kuotaMagang === null || kuotaMagang < 0) {
@@ -162,7 +178,8 @@ export async function POST(request: NextRequest) {
         bidangUsaha,
         deskripsi,
         kuotaMagang,
-        status: status as 'aktif' | 'nonaktif' | 'pending'
+        status: status as 'aktif' | 'nonaktif' | 'pending',
+        guruPenanggungJawabId: guruPenanggungJawabId || null
       },
       include: {
         _count: {

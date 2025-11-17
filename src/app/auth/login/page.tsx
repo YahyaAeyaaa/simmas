@@ -59,15 +59,15 @@ export default function LoginPage() {
         if (res.status === 400) setError(data?.message ?? 'Input tidak valid');
         else if (res.status === 401) setError(data?.message ?? 'Email atau password salah');
         else setError(data?.message ?? 'Terjadi kesalahan pada server');
-        return;
-      } 
+        return;   
+      }   
 
       // Success: server should return user object (and set HttpOnly cookie)
-      const user = data?.user;
-      const role = user?.role;
+      const user = data?.user;  
+      const role = user?.role;  
 
-      if (role === 'admin') router.push('/admin/dashboard');
-      else if (role === 'guru') router.push('/guru/dashboard');
+      if (role === 'admin') router.push('/admin/dashboard');  
+      else if (role === 'guru') router.push('/guru/dashboard'); 
       else if (role === 'siswa') router.push('/siswa/dashboard');
       else {
         router.push('/');

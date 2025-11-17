@@ -7,9 +7,12 @@ import ModalDetailTempatMagang from "./components/modalDetail";
 import { siswaDudiService, SiswaDudiData } from "@/app/service/siswaDudiService";
 import Pagination from "@/components/common/pagination";
 import Button from "@/components/common/Button";
+import { Toasts } from "@/components/modal/Toast";
 
-// ===== MAIN PAGE COMPONENT =====
+
 export default function CariTempatMagang() {
+    // Di bagian state (sekitar baris 15-20)
+    const [searchError, setSearchError] = useState<string | null>(null);
     const [searchValue, setSearchValue] = useState('');
     const [itemsPerPage, setItemsPerPage] = useState('8');
     const [dudiList, setDudiList] = useState<SiswaDudiData[]>([]);
@@ -17,6 +20,24 @@ export default function CariTempatMagang() {
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDudi, setSelectedDudi] = useState<SiswaDudiData | null>(null);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [limit] = useState(10);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const validateSearch = (value: string) => {
+        if (value.trim().length < 2) {
+            setSearchError('Minimal 2 karakter untuk pencarian');
+            return false;
+        }
+        setSearchError(null);
+        return true;
+    };
 
     // Fetch dudi data
     useEffect(() => {
@@ -27,6 +48,9 @@ export default function CariTempatMagang() {
 
                 const response = await siswaDudiService.getDudiList(searchValue);
                 
+                if (searchValue && !validateSearch(searchValue)) {
+                    return;
+                }
                 if (response.success) {
                     setDudiList(response.data);
                 } else {
@@ -57,15 +81,28 @@ export default function CariTempatMagang() {
         }
     };
 
-    const handleDaftar = (id: number) => {
-        console.log('Daftar tempat magang ID:', id);
-        // API call untuk daftar magang
+    const handleDaftar = async (id: number) => {
+        try {
+            const response = await siswaDudiService.daftarMagang(id);
+            if (response.success) {
+                Toasts('success', 4000, 'Pendaftaran berhasil', 'Menunggu persetujuan guru');
+                // Refresh list agar status/CTA bisa berubah kalau backend menandai "sudahDaftar"
+                const refreshed = await siswaDudiService.getDudiList(searchValue);
+                if (refreshed.success) setDudiList(refreshed.data);
+            } else {
+                Toasts('danger', 4000, 'Gagal mendaftar', response.error || 'Coba lagi nanti');
+            }
+        } catch (err) {
+            console.error('Error mendaftar magang:', err);
+            Toasts('danger', 4000, 'Terjadi kesalahan', 'Gagal mendaftar magang');
+        }
     };
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedDudi(null);
     };
+    
 
     if (loading) {
         return (
@@ -99,7 +136,7 @@ export default function CariTempatMagang() {
                 <h1 className="text-2xl font-bold text-gray-900 mb-6">Cari Tempat Magang</h1>
 
                 {/* Search & Filter Section */}
-                <div className="bg-white rounded-lg shadow p-4 mb-6">
+                <div className="p-4 mb-6">
                     <div className="flex items-center justify-start gap-4 flex-wrap">
                         <SearchInput
                             value={searchValue}
@@ -108,6 +145,9 @@ export default function CariTempatMagang() {
                             size="sm"
                             className="min-w-100"
                         />
+                        { searchError && (
+                            <p className="text-red-500 text-sm">{searchError}</p>
+                        ) }
                         <Button
                             variant="custom"
                             className="border border-cyan-500 text-cyan-500"
@@ -143,6 +183,13 @@ export default function CariTempatMagang() {
                 </div>
 
                 {/* Pagination Info */}
+                <Pagination
+                    itemsPerPage={limit}
+                    totalItems={dudiList.length}
+                    onPageChange={handlePageChange}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                />
             </div>
 
             {/* Modal Detail */}
@@ -154,6 +201,7 @@ export default function CariTempatMagang() {
                     data={selectedDudi}
                 />
             )}
+            
         </div>
     );
 }

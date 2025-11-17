@@ -1,31 +1,45 @@
-export type LogbookStatus = 'Disetujui' | 'Belum Diverifikasi' | 'Ditolak';
+import { CheckCircle, Clock, XCircle, LucideIcon } from 'lucide-react';
+
+export type LogbookStatus = 'approved' | 'pending' | 'rejected';
+export type LogbookStatusLegacy = 'Disetujui' | 'Belum Diverifikasi' | 'Ditolak';
 
 export interface LogbookStatusConfig {
   label: string;
   bgColor: string;
   textColor: string;
+  IconComponent?: LucideIcon;
 }
 
-export const getLogbookStatus = (status: LogbookStatus): LogbookStatusConfig => {
+export const getLogbookStatus = (status: LogbookStatus | LogbookStatusLegacy): LogbookStatusConfig => {
+  // Normalize status to new format
+  let normalizedStatus: LogbookStatus;
+  if (status === 'Disetujui') normalizedStatus = 'approved';
+  else if (status === 'Belum Diverifikasi') normalizedStatus = 'pending';
+  else if (status === 'Ditolak') normalizedStatus = 'rejected';
+  else normalizedStatus = status as LogbookStatus;
+
   const statusMap: Record<LogbookStatus, LogbookStatusConfig> = {
-    'Disetujui': {
+    'approved': {
       label: 'Disetujui',
       bgColor: 'bg-[#cfffe9]',
-      textColor: 'text-[#198754]'
+      textColor: 'text-[#198754]',
+      IconComponent: CheckCircle
     },
-    'Belum Diverifikasi': {
+    'pending': {
       label: 'Belum',
       bgColor: 'bg-[#fff4cc]',
-      textColor: 'text-[#ff9800]'
+      textColor: 'text-[#ff9800]',
+      IconComponent: Clock
     },
-    'Ditolak': {
+    'rejected': {
       label: 'Ditolak',
       bgColor: 'bg-[#ffd5d5]',
-      textColor: 'text-[#dc3545]'
+      textColor: 'text-[#dc3545]',
+      IconComponent: XCircle
     }
   };
 
-  return statusMap[status];
+  return statusMap[normalizedStatus];
 };
 
 // Interface untuk Logbook Data
@@ -37,8 +51,11 @@ export interface LogbookData {
   tanggal: string;
   kegiatan: string;
   kendala: string;
-  status: LogbookStatus;
+  status: LogbookStatus | LogbookStatusLegacy;
   catatanGuru: string;
+  dudiName?: string;
+  jamMulai?: string;
+  jamSelesai?: string;
 }
 
 // Dummy Data Logbook Siswa
@@ -51,8 +68,9 @@ export const logbookDummyData: LogbookData[] = [
     tanggal: '1 Mar 2024',
     kegiatan: 'Membuat desain UI aplikasi kasir menggunakan Figma. Melakukan analisis user experience dan wireframing untuk meningkatkan user...',
     kendala: 'Kesulitan menentukan skema warna yang tepat dan konsisten untuk seluruh aplikasi',
-    status: 'Disetujui',
-    catatanGuru: 'Bagus, lanjutkan dengan implementasi'
+    status: 'approved',
+    catatanGuru: 'Bagus, lanjutkan dengan implementasi',
+    dudiName: 'PT. Digital Solusi Indonesia'
   },
   {
     id: 2,
@@ -62,8 +80,9 @@ export const logbookDummyData: LogbookData[] = [
     tanggal: '2 Mar 2024',
     kegiatan: 'Belajar backend Laravel untuk membangun REST API sistem kasir. Mempelajari konsep MVC dan routing',
     kendala: 'Error saat mengirimkan migration database dan kesulitan memahami relationship antar tabel',
-    status: 'Belum Diverifikasi',
-    catatanGuru: 'Belum ada catatan'
+    status: 'pending',
+    catatanGuru: 'Belum ada catatan',
+    dudiName: 'PT. Digital Solusi Indonesia'
   },
   {
     id: 3,
@@ -73,8 +92,9 @@ export const logbookDummyData: LogbookData[] = [
     tanggal: '1 Mar 2024',
     kegiatan: 'Setup server Linux Ubuntu untuk deployment aplikasi web. Konfigurasi Apache dan MySQL',
     kendala: 'Belum familiar dengan command line interface dan permission system di linux',
-    status: 'Ditolak',
-    catatanGuru: 'Perbaiki deskripsi kegiatan, terlalu singkat'
+    status: 'rejected',
+    catatanGuru: 'Perbaiki deskripsi kegiatan, terlalu singkat',
+    dudiName: 'CV. Teknologi Maju Bersama'
   },
   {
     id: 4,
@@ -84,8 +104,9 @@ export const logbookDummyData: LogbookData[] = [
     tanggal: '3 Mar 2024',
     kegiatan: 'Melakukan troubleshooting jaringan komputer kantor dan mengkonfigurasi switch managed.',
     kendala: 'Beberapa port switch tidak berfungsi dengan baik',
-    status: 'Disetujui',
-    catatanGuru: 'Sudah bagus, dokumentasikan solusinya'
+    status: 'approved',
+    catatanGuru: 'Sudah bagus, dokumentasikan solusinya',
+    dudiName: 'PT. Network Sejahtera'
   },
   {
     id: 5,
@@ -95,8 +116,9 @@ export const logbookDummyData: LogbookData[] = [
     tanggal: '4 Mar 2024',
     kegiatan: 'Membuat dokumentasi API dan testing menggunakan Postman untuk endpoint yang sudah dibuat',
     kendala: 'Kesulitan dalam membuat dokumentasi yang comprehensive dan mudah dipahami',
-    status: 'Belum Diverifikasi',
-    catatanGuru: 'Belum ada catatan'
+    status: 'pending',
+    catatanGuru: 'Belum ada catatan',
+    dudiName: 'PT. Inovasi Digital'
   },
   {
     id: 6,
@@ -106,8 +128,9 @@ export const logbookDummyData: LogbookData[] = [
     tanggal: '5 Mar 2024',
     kegiatan: 'Instalasi dan konfigurasi CCTV sistem untuk monitoring keamanan kantor',
     kendala: 'Sinyal CCTV kadang terputus-putus',
-    status: 'Disetujui',
-    catatanGuru: 'Periksa kualitas kabel jaringan'
+    status: 'approved',
+    catatanGuru: 'Periksa kualitas kabel jaringan',
+    dudiName: 'CV. Keamanan Prima'
   },
   {
     id: 7,
@@ -117,8 +140,9 @@ export const logbookDummyData: LogbookData[] = [
     tanggal: '6 Mar 2024',
     kegiatan: 'Implementasi fitur authentication dan authorization menggunakan JWT',
     kendala: 'Token expired terlalu cepat',
-    status: 'Belum Diverifikasi',
-    catatanGuru: 'Belum ada catatan'
+    status: 'pending',
+    catatanGuru: 'Belum ada catatan',
+    dudiName: 'PT. Secure Apps Indonesia'
   },
   {
     id: 8,
@@ -128,8 +152,9 @@ export const logbookDummyData: LogbookData[] = [
     tanggal: '7 Mar 2024',
     kegiatan: 'Editing video company profile menggunakan Adobe Premiere Pro',
     kendala: 'Rendering video memakan waktu lama',
-    status: 'Disetujui',
-    catatanGuru: 'Hasil sudah bagus, pertahankan'
+    status: 'approved',
+    catatanGuru: 'Hasil sudah bagus, pertahankan',
+    dudiName: 'Studio Kreatif Media'
   },
   {
     id: 9,
@@ -139,8 +164,9 @@ export const logbookDummyData: LogbookData[] = [
     tanggal: '8 Mar 2024',
     kegiatan: 'Membuat unit testing untuk aplikasi menggunakan Jest dan React Testing Library',
     kendala: 'Kesulitan membuat mock data untuk testing',
-    status: 'Ditolak',
-    catatanGuru: 'Tambahkan detail coverage testing'
+    status: 'rejected',
+    catatanGuru: 'Tambahkan detail coverage testing',
+    dudiName: 'PT. Quality Assurance Tech'
   },
   {
     id: 10,
@@ -150,7 +176,8 @@ export const logbookDummyData: LogbookData[] = [
     tanggal: '9 Mar 2024',
     kegiatan: 'Maintenance server dan backup database rutin',
     kendala: 'Proses backup memakan storage besar',
-    status: 'Disetujui',
-    catatanGuru: 'Pertimbangkan incremental backup'
+    status: 'approved',
+    catatanGuru: 'Pertimbangkan incremental backup',
+    dudiName: 'PT. Data Center Indonesia'
   }
 ];

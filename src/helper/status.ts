@@ -38,6 +38,83 @@ export interface StatusC {
   textColor: string;
 }
 
+// Magang Status Types
+export type MagangStatus = 'pending' | 'diterima' | 'ditolak' | 'berlangsung' | 'selesai' | 'dibatalkan';
+
+export interface MagangStatusConfig {
+  label: string;
+  bgColor: string;
+  textColor: string;
+}
+
+export const getMagangStatus = (status: MagangStatus): MagangStatusConfig => {
+  const statusMap: Record<MagangStatus, MagangStatusConfig> = {
+    pending: {
+      label: 'Pending',
+      bgColor: 'bg-yellow-100',
+      textColor: 'text-yellow-700'
+    },
+    diterima: {
+      label: 'Diterima',
+      bgColor: 'bg-green-100',
+      textColor: 'text-green-700'
+    },
+    ditolak: {
+      label: 'Ditolak',
+      bgColor: 'bg-red-100',
+      textColor: 'text-red-700'
+    },
+    berlangsung: {
+      label: 'Berlangsung',
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-700'
+    },
+    selesai: {
+      label: 'Selesai',
+      bgColor: 'bg-green-50',
+      textColor: 'text-green-600'
+    },
+    dibatalkan: {
+      label: 'Dibatalkan',
+      bgColor: 'bg-red-100',
+      textColor: 'text-red-700'
+    }
+  };
+
+  return statusMap[status];
+};
+
+// Logbook Status Types
+export type LogbookStatus = 'pending' | 'disetujui' | 'ditolak';
+
+export interface LogbookStatusConfig {
+  label: string;
+  bgColor: string;
+  textColor: string;
+}
+
+export const getLogbookStatus = (status: LogbookStatus): LogbookStatusConfig => {
+  const statusMap: Record<LogbookStatus, LogbookStatusConfig> = {
+    pending: {
+      label: 'Pending',
+      bgColor: 'bg-yellow-100',
+      textColor: 'text-yellow-700'
+    },
+    disetujui: {
+      label: 'Disetujui',
+      bgColor: 'bg-green-50',
+      textColor: 'text-green-600'
+    },
+    ditolak: {
+      label: 'Ditolak',
+      bgColor: 'bg-red-100',
+      textColor: 'text-red-700'
+    }
+  };
+
+  return statusMap[status];
+};
+
 export interface DudiData {
   id: number;
   namaPerusahaan: string;
@@ -50,6 +127,12 @@ export interface DudiData {
   kuotaMagang?: number;
   status: Status;
   jumlahSiswaMagang: number;
+  guruPenanggungJawabId?: number | null;
+  guruPenanggungJawab?: {
+    id: number;
+    nama: string;
+    nip: string;
+  } | null;
 }
 
 export const getStatus = (status: Status): StatusC => {

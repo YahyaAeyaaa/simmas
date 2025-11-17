@@ -9,7 +9,8 @@ interface DudiCardProps {
 
 const DudiCard = ({ companyName, address, phone, studentCount }: DudiCardProps) => {
   return (
-    <div className='flex justify-between items-start'>
+    <>
+    <div className='flex justify-between items-start my-3'>
       <div className='text-sm space-y-2'>
         <p className='font-bold text-gray-800'>{companyName}</p>
         <div className='flex items-start gap-2 text-gray-600'>
@@ -21,10 +22,12 @@ const DudiCard = ({ companyName, address, phone, studentCount }: DudiCardProps) 
           <p>{phone}</p>
         </div>
       </div>
-      <div className='rounded-xl px-3 py-2 bg-[#970747] text-white text-sm font-medium'>
+      <div className='rounded-xl px-3 py-2 bg-[#A5A738] text-white text-sm font-medium'>
         <p>{studentCount} siswa</p>
       </div>
     </div>
+    <hr className='bg-slate-200 text-slate-200'/>
+    </>
   );
 };
 

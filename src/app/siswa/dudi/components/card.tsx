@@ -81,7 +81,7 @@ export default function MagangCard({ data, onDetail, onDaftar }: MagangCardProps
                     className="flex-shrink-0 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium"
                 >
                     <Eye size={16} />
-                    Detail
+                    Lihat Detail
                 </button>
                 <button
                     onClick={onDaftar}
@@ -95,7 +95,7 @@ export default function MagangCard({ data, onDetail, onDaftar }: MagangCardProps
                     {data.sudahDaftar ? (
                         <>
                             <CheckCircle size={16} />
-                            Sudah Daftar
+                            {data.badge && data.badge.toLowerCase().includes('menunggu') ? 'Menunggu' : 'Sudah Daftar'}
                         </>
                     ) : (
                         <>

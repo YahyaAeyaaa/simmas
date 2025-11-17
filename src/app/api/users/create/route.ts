@@ -3,24 +3,64 @@ import { prisma } from '@/app/lib/db/prisma';
 import { hashPassword } from '@/app/lib/auth/hash';
 import { z } from 'zod';
 
-// Validation schema
-const createUserSchema = z.object({
+// Validation schema for base user
+const baseUserSchema = {
   username: z.string().min(3, 'Username minimal 3 karakter'),
   email: z.string().email('Format email tidak valid'),
   password: z.string().min(6, 'Password minimal 6 karakter'),
   role: z.enum(['admin', 'guru', 'siswa']),
   emailVerification: z.enum(['verified', 'unverified']),
-  jurusan: z.string().optional()
+};
+
+// Schema for siswa
+const siswaSchema = z.object({
+  ...baseUserSchema,
+  role: z.literal('siswa'),
+  jurusan: z.string().min(1, 'Jurusan wajib diisi'),
+  kelas: z.enum(['XI', 'XII']),
+  nis: z.string().optional(),
 });
+
+// Schema for guru
+const guruSchema = z.object({
+  ...baseUserSchema,
+  role: z.literal('guru'),
+  nip: z.string().optional(),
+});
+
+// Schema for admin
+const adminSchema = z.object({
+  ...baseUserSchema,
+  role: z.literal('admin'),
+});
+
+// Combined schema using discriminated union
+const createUserSchema = z.discriminatedUnion('role', [
+  siswaSchema,
+  guruSchema,
+  adminSchema,
+]);
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
     // Validate input
-    const validatedData = createUserSchema.parse(body);
+    const validationResult = createUserSchema.safeParse(body);
     
-    const { username, email, password, role, emailVerification, jurusan } = validatedData;
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Data tidak valid',
+          details: validationResult.error
+        },
+        { status: 400 }
+      );
+    }
+    
+    const data = validationResult.data;
+    const { username, email, password, role, emailVerification } = data;
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
@@ -43,28 +83,69 @@ export async function POST(request: NextRequest) {
     // Set email verification date
     const emailVerifiedAt = emailVerification === 'verified' ? new Date() : null;
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name: username,
-        email,
-        password: hashedPassword,
-        role,
-        emailVerifiedAt,
-        ...(role === 'siswa' && {
+    let user;
+
+    // Create user with related data based on role
+    if (role === 'siswa') {
+      user = await prisma.user.create({
+        data: {
+          name: username,
+          email,
+          password: hashedPassword,
+          role,
+          emailVerifiedAt,
           siswa: {
             create: {
               nama: username,
-              nis: '', // Default empty, should be updated later
-              kelas: '', // Default empty, should be updated later
-              jurusan: jurusan || '',
-              alamat: '', // Default empty, should be updated later
-              telepon: '' // Default empty, should be updated later
+              nis: data.nis || `NIS-${Date.now()}`,
+              kelas: data.kelas,
+              jurusan: data.jurusan,
+              alamat: "-",
+              telepon: "-"
             }
           }
-        })
-      }
-    });
+        },
+        include: {
+          siswa: true
+        }
+      });
+    } else if (role === 'guru') {
+      user = await prisma.user.create({
+        data: {
+          name: username,
+          email,
+          password: hashedPassword,
+          role,
+          emailVerifiedAt,
+          guru: {
+            create: {
+              nama: username,
+              nip: data.nip || `NIP-${Date.now()}`,
+              alamat: "-",
+              telepon: "-"
+            }
+          }
+        },
+        include: {
+          guru: true
+        }
+      });
+    } else {
+      // Admin role - selalu set emailVerifiedAt untuk admin
+      user = await prisma.user.create({
+        data: {
+          name: username,
+          email,
+          password: hashedPassword,
+          role,
+          emailVerifiedAt: new Date() // Pastikan email admin selalu terverifikasi
+        },
+        include: {
+          siswa: true,
+          guru: true
+        }
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -73,7 +154,9 @@ export async function POST(request: NextRequest) {
         name: user.name,
         email: user.email,
         role: user.role,
-        emailVerifiedAt: user.emailVerifiedAt
+        emailVerifiedAt: user.emailVerifiedAt,
+        siswa: user.siswa,
+        guru: user.guru
       },
       message: 'User berhasil dibuat'
     });
@@ -86,7 +169,7 @@ export async function POST(request: NextRequest) {
         { 
           success: false, 
           error: 'Data tidak valid',
-          details: error.errors
+          details: error
         },
         { status: 400 }
       );

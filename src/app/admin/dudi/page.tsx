@@ -178,6 +178,7 @@ export default function Dudi () {
         deskripsi: string;
         kuotaMagang: number;
         status: string;
+        guruPenanggungJawabId: number | null;
     }) => {
         if (!dudiToEdit) return;
 
@@ -192,7 +193,8 @@ export default function Dudi () {
                 bidangUsaha: data.bidangUsaha,
                 deskripsi: data.deskripsi,
                 kuotaMagang: data.kuotaMagang,
-                status: data.status as 'aktif' | 'nonaktif' | 'pending'
+                status: data.status as 'aktif' | 'nonaktif' | 'pending',
+                guruPenanggungJawabId: data.guruPenanggungJawabId
             });
 
             if (response.success) {
@@ -267,6 +269,7 @@ export default function Dudi () {
         deskripsi: string;
         kuotaMagang: number;
         status: string;
+        guruPenanggungJawabId: number | null;
     }) => {
         try {
             const response = await dudiService.createDudi({
@@ -278,7 +281,8 @@ export default function Dudi () {
                 bidangUsaha: data.bidangUsaha,
                 deskripsi: data.deskripsi,
                 kuotaMagang: data.kuotaMagang,
-                status: data.status as 'aktif' | 'nonaktif' | 'pending'
+                status: data.status as 'aktif' | 'nonaktif' | 'pending',
+                guruPenanggungJawabId: data.guruPenanggungJawabId
             });
 
             if (response.success) {
@@ -354,8 +358,7 @@ export default function Dudi () {
     return (
         <>
         <div className="bg-gray-50 p-6 min-h-screen">
-            <div className="">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-4">
                     <Card 
                         title="Total Dudi"
                         total={stats.totalDudi}
@@ -381,7 +384,6 @@ export default function Dudi () {
                         subtitle="Siswa Magang Aktif"
                     />
                 </div>
-            </div>
         <div className='w-full h-auto rounded-lg shadow-lg bg-white p-6'>
             <div className='flex justify-between items-center mb-6'>
                 <div className='flex items-center gap-2'>
@@ -537,7 +539,8 @@ export default function Dudi () {
                 bidangUsaha: dudiToEdit.bidangUsaha || '',
                 deskripsi: dudiToEdit.deskripsi || '',
                 kuotaMagang: dudiToEdit.kuotaMagang || 0,
-                status: dudiToEdit.status
+                status: dudiToEdit.status,
+                guruPenanggungJawabId: dudiToEdit.guruPenanggungJawabId
             } : null}
         />
 

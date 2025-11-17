@@ -36,5 +36,11 @@
         "title": "Approval",
         "icon": "ti ti-check",
         "link": "approval"
+    },
+    {
+        "type": "item",
+        "title": "Casino",
+        "icon": "ti ti-coins",
+        "link": "logbook"
     }
     ]

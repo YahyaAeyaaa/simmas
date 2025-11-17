@@ -1,316 +1,190 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/db/prisma';
-import { z } from 'zod';
+// app/api/users/[id]/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/app/lib/db/prisma";
+import { hashPassword } from "@/app/lib/auth/hash";
+import { z } from "zod";
 
-// Validation schema for update
-const updateUserSchema = z.object({
-  username: z.string().min(3, 'Username minimal 3 karakter'),
-  email: z.string().email('Format email tidak valid'),
-  role: z.enum(['admin', 'guru', 'siswa']),
-  emailVerification: z.enum(['verified', 'unverified'])
+/** Auth guard - check if user is admin */
+async function ensureAdmin(req: NextRequest) {
+  // Untuk sementara, bypass auth check agar admin bisa mengedit data
+  // TODO: Implementasikan auth check yang lebih baik menggunakan session
+  return null;
+}
+
+const updateSchema = z.object({
+  username: z.string().min(3).optional(),
+  email: z.string().email().optional(),
+  role: z.enum(["admin", "guru", "siswa"]).optional(),
+  emailVerification: z.enum(["verified", "unverified"]).optional(),
+  jurusan: z.string().optional().nullable(),
+  kelas: z.enum(["XI","XII"]).optional().nullable(),
+  nis: z.string().optional().nullable(),
+  nip: z.string().optional().nullable(),
+  password: z.string().min(6).optional()
 });
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const userId = parseInt(params.id);
-    
-    if (isNaN(userId)) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'ID user tidak valid' 
-        },
-        { status: 400 }
-      );
-    }
-
-    const body = await request.json();
-    
-    // Validate input
-    const validatedData = updateUserSchema.parse(body);
-    
-    const { username, email, role, emailVerification } = validatedData;
-
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId }
+    const id = Number(params.id);
+    const u = await prisma.user.findUnique({
+      where: { id },
+      include: { siswa: true, guru: true, dudi: true }
     });
+    if (!u) return NextResponse.json({ success: false, error: "User tidak ditemukan" }, { status: 404 });
 
-    if (!existingUser) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'User tidak ditemukan' 
-        },
-        { status: 404 }
-      );
-    }
-
-    // Check if email already exists (excluding current user)
-    const emailExists = await prisma.user.findFirst({
-      where: { 
-        email,
-        id: { not: userId }
-      }
-    });
-
-    if (emailExists) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Email sudah digunakan oleh user lain' 
-        },
-        { status: 400 }
-      );
-    }
-
-    // Set email verification date
-    const emailVerifiedAt = emailVerification === 'verified' ? new Date() : null;
-
-    // Update user
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        name: username,
-        email,
-        role,
-        emailVerifiedAt
-      }
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: updatedUser.id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        emailVerifiedAt: updatedUser.emailVerifiedAt
-      },
-      message: 'User berhasil diperbarui'
-    });
-
-  } catch (error) {
-    console.error('Error updating user:', error);
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Data tidak valid',
-          details: error.errors
-        },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Gagal memperbarui user' 
-      },
-      { status: 500 }
-    );
+    const payload = {
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      emailVerifiedAt: u.emailVerifiedAt,
+      siswa: u.siswa,
+      guru: u.guru,
+      dudi: u.dudi
+    };
+    return NextResponse.json({ success: true, data: payload });
+  } catch (err) {
+    console.error("GET user error", err);
+    return NextResponse.json({ success: false, error: "Gagal memuat user" }, { status: 500 });
   }
 }
 
-// GET single user by ID
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const userId = parseInt(params.id);
-    
-    if (isNaN(userId)) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'ID user tidak valid' 
-        },
-        { status: 400 }
-      );
+    // auth guard (dev)
+    const forbidden = await ensureAdmin(request);
+    if (forbidden) return forbidden;
+
+    const id = Number(params.id);
+    const body = await request.json();
+    const parsed = updateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: "Payload tidak valid", details: parsed.error.errors }, { status: 400 });
     }
+    const data = parsed.data;
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        siswa: true,
-        guru: true,
-        dudi: true
-      }
-    });
+    const user = await prisma.user.findUnique({ where: { id }, include: { siswa: true, guru: true, dudi: true }});
+    if (!user) return NextResponse.json({ success: false, error: "User tidak ditemukan" }, { status: 404 });
 
-    if (!user) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'User tidak ditemukan' 
-        },
-        { status: 404 }
-      );
-    }
-
-    // Transform data to match frontend interface
-    let displayName = user.name;
-    let displayId = user.id.toString();
-
-    // Get display name and ID based on role
-    if (user.role === 'siswa' && user.siswa) {
-      displayName = user.siswa.nama;
-      displayId = user.siswa.nis;
-    } else if (user.role === 'guru' && user.guru) {
-      displayName = user.guru.nama;
-      displayId = user.guru.nip;
-    } else if (user.role === 'admin') {
-      displayName = user.name;
-      displayId = user.id.toString();
-    } else if (user.dudi) {
-      displayName = user.dudi.namaPerusahaan;
-      displayId = user.id.toString();
-    }
-
-    const transformedUser = {
-      id: user.id,
-      namaPerusahaan: displayName,
-      id_user: displayId,
-      email: user.email,
-      verifed_at: user.emailVerifiedAt ? 'Verified' : 'Unverified',
-      penanggungJawab: displayName,
-      status: user.role,
-      Terdaftar_pada: user.createdAt.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      })
+    // Start transaction to sync role changes
+    const updateOps: any = {
+      name: data.username ?? user.name,
+      email: data.email ?? user.email,
     };
 
-    return NextResponse.json({
-      success: true,
-      data: transformedUser
+    if (data.password) {
+      updateOps.password = await hashPassword(data.password);
+    }
+
+    if (data.emailVerification) {
+      updateOps.emailVerifiedAt = data.emailVerification === "verified" ? new Date() : null;
+    }
+
+    // handle role change or profile updates
+    await prisma.$transaction(async (tx) => {
+      // If role stays same:
+      if (data.role && data.role !== user.role) {
+        // If switching away from siswa/guru/dudi -> remove old profile (if exist)
+        if (user.siswa) await tx.siswa.delete({ where: { id: user.siswa.id }});
+        if (user.guru) await tx.guru.delete({ where: { id: user.guru.id }});
+        if (user.dudi) await tx.dudi.delete({ where: { id: user.dudi!.id }}).catch(()=>{});
+        // then create new profile if new role is siswa/guru
+        if (data.role === "siswa") {
+          updateOps.role = "siswa";
+          await tx.user.update({
+            where: { id },
+            data: {
+              ...updateOps,
+              siswa: {
+                create: {
+                  nama: data.username ?? user.name,
+                  nis: data.jurusan ? `NIS-${Date.now()}` : `NIS-${Date.now()}`,
+                  kelas: data.kelas ?? "XI",
+                  jurusan: data.jurusan ?? "Umum",
+                  alamat: "-",
+                  telepon: "-"
+                }
+              }
+            }
+          });
+          return;
+        } else if (data.role === "guru") {
+          updateOps.role = "guru";
+          await tx.user.update({
+            where: { id },
+            data: {
+              ...updateOps,
+              guru: {
+                create: {
+                  nama: data.username ?? user.name,
+                  nip: `NIP-${Date.now()}`,
+                  alamat: "-",
+                  telepon: "-"
+                }
+              }
+            }
+          });
+          return;
+        } else {
+          // admin
+          updateOps.role = "admin";
+          await tx.user.update({ where: { id }, data: updateOps });
+          return;
+        }
+      } else {
+        // same role -> update user and profile if provided
+        await tx.user.update({ where: { id }, data: updateOps });
+
+        if (user.siswa && (data.jurusan || data.kelas || data.username)) {
+          await tx.siswa.update({
+            where: { id: user.siswa.id },
+            data: {
+              jurusan: data.jurusan ?? user.siswa.jurusan,
+              kelas: data.kelas ?? user.siswa.kelas,
+              nama: data.username ?? user.siswa.nama
+            }
+          });
+        }
+
+        if (user.guru && (data.username || data.nip)) {
+          await tx.guru.update({
+            where: { id: user.guru.id },
+            data: {
+              nama: data.username ?? user.guru.nama,
+              nip: data.nip ?? user.guru.nip
+            }
+          });
+        }
+      }
     });
 
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Gagal mengambil data user' 
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, message: "User berhasil diperbarui" });
+  } catch (err) {
+    console.error("PUT user error", err);
+    return NextResponse.json({ success: false, error: "Gagal memperbarui user" }, { status: 500 });
   }
 }
 
-// DELETE user by ID
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const userId = parseInt(params.id);
-    
-    if (isNaN(userId)) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'ID user tidak valid' 
-        },
-        { status: 400 }
-      );
-    }
+    // auth guard (dev)
+    const forbidden = await ensureAdmin(request);
+    if (forbidden) return forbidden;
 
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        siswa: true,
-        guru: true,
-        dudi: true
-      }
+    const id = Number(params.id);
+    const user = await prisma.user.findUnique({ where: { id }, include: { siswa: true, guru: true, dudi: true }});
+    if (!user) return NextResponse.json({ success: false, error: "User tidak ditemukan" }, { status: 404 });
+
+    await prisma.$transaction(async (tx) => {
+      if (user.siswa) await tx.siswa.delete({ where: { id: user.siswa.id }});
+      if (user.guru) await tx.guru.delete({ where: { id: user.guru.id }});
+      if (user.dudi) await tx.dudi.delete({ where: { id: user.dudi!.id } }).catch(()=>{});
+      await tx.user.delete({ where: { id }});
     });
 
-    if (!existingUser) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'User tidak ditemukan' 
-        },
-        { status: 404 }
-      );
-    }
-
-    // Check if user has related data that prevents deletion
-    // For example, if siswa has magang records, we might want to prevent deletion
-    if (existingUser.siswa) {
-      const magangCount = await prisma.magang.count({
-        where: { siswaId: existingUser.siswa.id }
-      });
-      
-      if (magangCount > 0) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Tidak dapat menghapus user karena memiliki data magang yang terkait' 
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    if (existingUser.guru) {
-      const magangCount = await prisma.magang.count({
-        where: { guruId: existingUser.guru.id }
-      });
-      
-      if (magangCount > 0) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Tidak dapat menghapus user karena memiliki data magang yang terkait' 
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    if (existingUser.dudi) {
-      const magangCount = await prisma.magang.count({
-        where: { dudiId: existingUser.dudi.id }
-      });
-      
-      if (magangCount > 0) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Tidak dapat menghapus user karena memiliki data magang yang terkait' 
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Delete user (this will cascade delete related records due to Prisma relations)
-    await prisma.user.delete({
-      where: { id: userId }
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'User berhasil dihapus'
-    });
-
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Gagal menghapus user' 
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, message: "User dihapus" });
+  } catch (err) {
+    console.error("DELETE user error", err);
+    return NextResponse.json({ success: false, error: "Gagal menghapus user" }, { status: 500 });
   }
 }

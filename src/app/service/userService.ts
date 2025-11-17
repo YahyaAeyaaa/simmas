@@ -6,6 +6,12 @@ export type CreateUserPayload = {
   email: string;
   password: string;
   role: 'admin' | 'siswa' | 'guru';
+  // Tambahan untuk siswa
+  jurusan?: string;
+  kelas?: 'XI' | 'XII';
+  nis?: string;
+  // Tambahan untuk guru
+  nip?: string;
 };
 
 export class AppError extends Error {
@@ -25,22 +31,62 @@ export async function findUserByEmail(email: string) {
 
 export async function createUser(payload: CreateUserPayload) {
   // password must be hashed before calling this
-  const user = await prisma.user.create({
-    data: {
-      name: payload.name,
-      email: payload.email,
-      password: payload.password,
-      role: payload.role,
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  let user;
+  
+  if (payload.role === 'siswa') {
+    user = await prisma.user.create({
+      data: {
+        name: payload.name,
+        email: payload.email,
+        password: payload.password,
+        role: payload.role,
+        siswa: {
+          create: {
+            nama: payload.name,
+            nis: payload.nis || `NIS-${Date.now()}`,
+            kelas: payload.kelas || 'XI',
+            jurusan: payload.jurusan || 'Umum',
+            alamat: "-",
+            telepon: "-"
+          }
+        }
+      },
+      include: {
+        siswa: true
+      }
+    });
+  } else if (payload.role === 'guru') {
+    user = await prisma.user.create({
+      data: {
+        name: payload.name,
+        email: payload.email,
+        password: payload.password,
+        role: payload.role,
+        guru: {
+          create: {
+            nama: payload.name,
+            nip: payload.nip || `NIP-${Date.now()}`,
+            alamat: "-",
+            telepon: "-"
+          }
+        }
+      },
+      include: {
+        guru: true
+      }
+    });
+  } else {
+    // Admin
+    user = await prisma.user.create({
+      data: {
+        name: payload.name,
+        email: payload.email,
+        password: payload.password,
+        role: payload.role,
+      }
+    });
+  }
+  
   return user;
 }
 

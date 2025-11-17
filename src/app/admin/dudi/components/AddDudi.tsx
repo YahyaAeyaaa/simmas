@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { X, Building2, MapPin, Phone, Mail, User, Activity, Briefcase, FileText, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Building2, MapPin, Phone, Mail, User, Activity, Briefcase, FileText, Users, GraduationCap } from "lucide-react";
 import FormInput from "@/components/common/FormInput";
 import FormSelect from "@/components/common/FormSelect";
 import FormTextarea from "@/components/common/textArea";
+
+interface Guru {
+    id: number;
+    nama: string;
+    nip: string;
+}
 
 interface ModalAddDudiProps {
     isOpen: boolean;
@@ -19,6 +25,7 @@ interface ModalAddDudiProps {
         deskripsi: string;
         kuotaMagang: number;
         status: string;
+        guruPenanggungJawabId: number | null;
     }) => Promise<void>;
 }
 
@@ -32,8 +39,11 @@ export default function ModalAddDudi({ isOpen, onClose, onSubmit }: ModalAddDudi
         bidangUsaha: "",
         deskripsi: "",
         kuotaMagang: 0,
-        status: ""
+        status: "",
+        guruPenanggungJawabId: null as number | null
     });
+    
+    const [gurus, setGurus] = useState<Guru[]>([]);
     
     const [errors, setErrors] = useState({
         namaPerusahaan: "",
@@ -45,10 +55,31 @@ export default function ModalAddDudi({ isOpen, onClose, onSubmit }: ModalAddDudi
         deskripsi: "",
         kuotaMagang: "",
         status: "",
+        guruPenanggungJawabId: "",
         general: ""
     });
     
     const [isLoading, setIsLoading] = useState(false);
+
+    // Fetch gurus when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            fetchGurus();
+        }
+    }, [isOpen]);
+
+    const fetchGurus = async () => {
+        try {
+            const response = await fetch('/api/guru/list');
+            const data = await response.json();
+            
+            if (data.success) {
+                setGurus(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching gurus:', error);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -56,6 +87,14 @@ export default function ModalAddDudi({ isOpen, onClose, onSubmit }: ModalAddDudi
         { value: "aktif", label: "Aktif" },
         { value: "pending", label: "Pending" },
         { value: "nonaktif", label: "Tidak Aktif" }
+    ];
+
+    const guruOptions = [
+        { value: "", label: "Pilih Guru Penanggung Jawab (Opsional)" },
+        ...gurus.map(guru => ({
+            value: guru.id.toString(),
+            label: `${guru.nama}`
+        }))
     ];
 
     const validateForm = () => {
@@ -161,7 +200,8 @@ export default function ModalAddDudi({ isOpen, onClose, onSubmit }: ModalAddDudi
                 bidangUsaha: "",
                 deskripsi: "",
                 kuotaMagang: 0,
-                status: ""
+                status: "",
+                guruPenanggungJawabId: null
             });
             setErrors({
                 namaPerusahaan: "",
@@ -173,6 +213,7 @@ export default function ModalAddDudi({ isOpen, onClose, onSubmit }: ModalAddDudi
                 deskripsi: "",
                 kuotaMagang: "",
                 status: "",
+                guruPenanggungJawabId: "",
                 general: ""
             });
             onClose();
@@ -347,6 +388,19 @@ export default function ModalAddDudi({ isOpen, onClose, onSubmit }: ModalAddDudi
                                 required
                             />
                         </div>
+
+                        {/* Guru Penanggung Jawab */}
+                        <FormSelect
+                            label="Guru Penanggung Jawab"
+                            name="guruPenanggungJawabId"
+                            value={formData.guruPenanggungJawabId?.toString() || ""}
+                            onChange={(value) => handleChange("guruPenanggungJawabId", value ? parseInt(value) : null)}
+                            options={guruOptions}
+                            placeholder="Pilih guru penanggung jawab"
+                            icon={GraduationCap}
+                            error={errors.guruPenanggungJawabId}
+                            disabled={isLoading}
+                        />
                     </div>
 
                     {/* Footer */}

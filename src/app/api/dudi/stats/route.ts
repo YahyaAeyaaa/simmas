@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
       where: { status: 'pending' }
     });
 
-    // Get total students in internship
+    // Get total students in internship (only active internships)
     const totalSiswaMagang = await prisma.magang.count({
       where: {
         status: {
-          in: ['diterima', 'berlangsung']
+          in: ['pending', 'berlangsung']
         }
       }
     });

@@ -15,6 +15,7 @@ import {
   Briefcase,
   BookOpen, 
   Check,
+  Coins
 } from "lucide-react";
 
 interface SidebarProps {
@@ -40,6 +41,7 @@ const iconMap: { [key: string]: any } = {
   "ti ti-briefcase": Briefcase,
   "ti ti-notebook": BookOpen ,
   "ti ti-check": Check,
+  "ti ti-coins": Coins,
 };
 
 const Sidebar = ({ toggleSidebar, isOpen = true, userRole }: SidebarProps) => {
@@ -80,7 +82,7 @@ const Sidebar = ({ toggleSidebar, isOpen = true, userRole }: SidebarProps) => {
     return (
       <IconComponent 
         className={`w-5 h-5 transition-colors ${
-          isActive ? "text-white" : "text-[#970747] group-hover:text-white"
+          isActive ? "text-white" : "text-cyan-500 group-hover:text-white"
         }`} 
       />
     );
@@ -109,7 +111,7 @@ const Sidebar = ({ toggleSidebar, isOpen = true, userRole }: SidebarProps) => {
               if (menu.type === "section") {
                 return (
                   <li key={index} className="pt-4 pb-2 px-3">
-                    <span className="text-xs font-semibold text-[#970747] uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       {menu.title}
                     </span>
                   </li>
@@ -127,8 +129,8 @@ const Sidebar = ({ toggleSidebar, isOpen = true, userRole }: SidebarProps) => {
                       href={fullLink}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                         isActive
-                          ? "bg-[#970747] text-white font-medium"
-                          : "text-[#970747] hover:bg-[#970747] hover:text-white"
+                          ? "bg-cyan-500 text-white font-medium"
+                          : "text-cyan-500 hover:bg-cyan-500 hover:text-white"
                       }`}
                     >
                       {renderIcon(menu.icon, isActive)}

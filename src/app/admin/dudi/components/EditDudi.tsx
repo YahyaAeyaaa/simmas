@@ -1,10 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Building2, MapPin, Phone, Mail, User, Activity, Briefcase, FileText, Users } from "lucide-react";
+import { X, Building2, MapPin, Phone, Mail, User, Activity, Briefcase, FileText, Users, GraduationCap } from "lucide-react";
 import FormInput from "@/components/common/FormInput";
 import FormSelect from "@/components/common/FormSelect";
 import FormTextarea from "@/components/common/textArea";
+
+interface Guru {
+    id: number;
+    nama: string;
+    nip: string;
+}
 
 interface ModalEditDudiProps {
     isOpen: boolean;
@@ -19,6 +25,7 @@ interface ModalEditDudiProps {
         deskripsi: string;
         kuotaMagang: number;
         status: string;
+        guruPenanggungJawabId: number | null;
     }) => Promise<void>;
     dudiData?: {
         namaPerusahaan: string;
@@ -30,6 +37,7 @@ interface ModalEditDudiProps {
         deskripsi?: string;
         kuotaMagang?: number;
         status: string;
+        guruPenanggungJawabId?: number | null;
     } | null;
 }
 
@@ -43,7 +51,8 @@ export default function ModalEditDudi({ isOpen, onClose, onSubmit, dudiData }: M
         bidangUsaha: "",
         deskripsi: "",
         kuotaMagang: 0,
-        status: ""
+        status: "",
+        guruPenanggungJawabId: null as number | null
     });
     
     const [errors, setErrors] = useState({
@@ -55,10 +64,12 @@ export default function ModalEditDudi({ isOpen, onClose, onSubmit, dudiData }: M
         bidangUsaha: "",
         deskripsi: "",
         kuotaMagang: "",
-        status: ""
+        status: "",
+        guruPenanggungJawabId: ""
     });
     
     const [isLoading, setIsLoading] = useState(false);
+    const [gurus, setGurus] = useState<Guru[]>([]);
 
     useEffect(() => {
         if (dudiData && isOpen) {
@@ -71,10 +82,31 @@ export default function ModalEditDudi({ isOpen, onClose, onSubmit, dudiData }: M
                 bidangUsaha: dudiData.bidangUsaha || "",
                 deskripsi: dudiData.deskripsi || "",
                 kuotaMagang: dudiData.kuotaMagang || 0,
-                status: dudiData.status || ""
+                status: dudiData.status || "",
+                guruPenanggungJawabId: dudiData.guruPenanggungJawabId || null
             });
         }
     }, [dudiData, isOpen]);
+
+    // Fetch gurus when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            fetchGurus();
+        }
+    }, [isOpen]);
+
+    const fetchGurus = async () => {
+        try {
+            const response = await fetch('/api/guru/list');
+            const data = await response.json();
+            
+            if (data.success) {
+                setGurus(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching gurus:', error);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -82,6 +114,14 @@ export default function ModalEditDudi({ isOpen, onClose, onSubmit, dudiData }: M
         { value: "aktif", label: "Aktif" },
         { value: "pending", label: "Pending" },
         { value: "nonaktif", label: "Tidak Aktif" }
+    ];
+
+    const guruOptions = [
+        { value: "", label: "Pilih Guru Penanggung Jawab (Opsional)" },
+        ...gurus.map(guru => ({
+            value: guru.id.toString(),
+            label: `${guru.nama}`
+        }))
     ];
 
     const validateForm = () => {
@@ -94,7 +134,8 @@ export default function ModalEditDudi({ isOpen, onClose, onSubmit, dudiData }: M
             bidangUsaha: "",
             deskripsi: "",
             kuotaMagang: "",
-            status: ""
+            status: "",
+            guruPenanggungJawabId: ""
         };
         let isValid = true;
 
@@ -183,7 +224,8 @@ export default function ModalEditDudi({ isOpen, onClose, onSubmit, dudiData }: M
                 bidangUsaha: "",
                 deskripsi: "",
                 kuotaMagang: 0,
-                status: ""
+                status: "",
+                guruPenanggungJawabId: null
             });
             setErrors({
                 namaPerusahaan: "",
@@ -194,13 +236,14 @@ export default function ModalEditDudi({ isOpen, onClose, onSubmit, dudiData }: M
                 bidangUsaha: "",
                 deskripsi: "",
                 kuotaMagang: "",
-                status: ""
+                status: "",
+                guruPenanggungJawabId: ""
             });
             onClose();
         }
     };
 
-    const handleChange = (field: string, value: string | number) => {
+    const handleChange = (field: string, value: string | number | null) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         if (errors[field as keyof typeof errors]) {
             setErrors(prev => ({ ...prev, [field]: "" }));
@@ -361,6 +404,19 @@ export default function ModalEditDudi({ isOpen, onClose, onSubmit, dudiData }: M
                                 required
                             />
                         </div>
+
+                        {/* Guru Penanggung Jawab */}
+                        <FormSelect
+                            label="Guru Penanggung Jawab"
+                            name="guruPenanggungJawabId"
+                            value={formData.guruPenanggungJawabId?.toString() || ""}
+                            onChange={(value) => handleChange("guruPenanggungJawabId", value ? parseInt(value) : null)}
+                            options={guruOptions}
+                            placeholder="Pilih guru penanggung jawab"
+                            icon={GraduationCap}
+                            error={errors.guruPenanggungJawabId}
+                            disabled={isLoading}
+                        />
                     </div>
 
                     {/* Footer */}

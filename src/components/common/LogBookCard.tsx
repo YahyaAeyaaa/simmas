@@ -1,20 +1,24 @@
 import { BookOpen, Calendar } from 'lucide-react';
-import { getStatusConfig, StatusType } from '@/helper/status';
+import { getLogbookStatus, LogbookStatus } from '@/helper/status';
 
 interface LogbookCardProps {
   name: string;
   date: string;
   issue?: string;
-  status: StatusType;
+  status: LogbookStatus;
 }
 
 const LogbookCard = ({ name, date, issue, status }: LogbookCardProps) => {
-  const statusConfig = getStatusConfig(status);
+  const statusConfig = getLogbookStatus(status) || {
+    label: 'Unknown',
+    bgColor: 'bg-gray-100',
+    textColor: 'text-gray-800'
+  };
 
   return (
     <div className='border border-gray-200 rounded-lg bg-gray-100 flex justify-between items-start p-4 mb-3'>
       <div className='flex items-start gap-3.5'>
-        <div className='bg-[#970747] p-2 rounded-xl'>
+        <div className='bg-lime-500 p-2 rounded-xl'>
           <BookOpen className='text-white' size={20}/>  
         </div>
         <div className='text-sm'>

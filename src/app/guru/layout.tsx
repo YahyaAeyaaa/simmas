@@ -8,7 +8,7 @@ export default async function GuruLayout({
   children: ReactNode;
 }) {
   // Only allow guru role
-  const session = await requireAuth(['guru']);
+  const session = await requireAuth(['guru' , 'admin']);
   
   return (
     <DashboardLayout 

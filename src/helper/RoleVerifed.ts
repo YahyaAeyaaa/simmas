@@ -12,6 +12,8 @@ export interface UserData {
   penanggungJawab: string;
   status: Role;
   Terdaftar_pada: string;
+  jurusan?: string;
+  kelas?: string;
 }
 
 export interface ApiResponse<T> {
@@ -89,54 +91,54 @@ export const getVerificationStatus = (status: string): VerificationInfo => {
 };
 
 export const userDummyData: UserData[] = [
-  {
-    id: 1,
-    namaPerusahaan: 'Andi Wijaya',
-    id_user: '15',
-    email: 'andi.wijaya@gmail.com',
-    verifed_at: 'Verified',
-    penanggungJawab: 'Andi Wijaya',
-    status: 'admin',
-    Terdaftar_pada: '3 aug 2024'
-  },
-  {
-    id: 2,
-    namaPerusahaan: 'Siti Nurhaliza',
-    id_user: '14',
-    email: 'siti.nurhaliza@gmail.com',
-    verifed_at: 'Verified',
-    penanggungJawab: 'Siti Nurhaliza',
-    status: 'guru',
-    Terdaftar_pada: '2 feb 2020'
-  },
-  {
-    id: 3,
-    namaPerusahaan: 'Budi Santoso',
-    id_user: '13',
-    email: 'budi.santoso@gmail.com',
-    verifed_at: 'Verified',
-    penanggungJawab: 'Budi Santoso',
-    status: 'guru',
-    Terdaftar_pada: '2 sep 2024'
-  },
-  {
-    id: 4,
-    namaPerusahaan: 'Dewi Lestari',
-    id_user: '12',
-    email: 'dewi.lestari@gmail.com',
-    verifed_at: 'Unverified',
-    penanggungJawab: 'Dewi Lestari',
-    status: 'siswa',
-    Terdaftar_pada: '8 Marc 2024'
-  },
-  {
-    id: 5,
-    namaPerusahaan: 'Rudi Hermawan',
-    id_user: '11',
-    email: 'rudi.hermawan@gmail.com',
-    verifed_at: 'Verified',
-    penanggungJawab: 'Rudi Hermawan',
-    status: 'guru',
-    Terdaftar_pada: '7 jan 2024'
-  },
+  // {
+  //   id: 1,
+  //   namaPerusahaan: 'Andi Wijaya',
+  //   id_user: '15',
+  //   email: 'andi.wijaya@gmail.com',
+  //   verifed_at: 'Verified',
+  //   penanggungJawab: 'Andi Wijaya',
+  //   status: 'admin',
+  //   Terdaftar_pada: '3 aug 2024'
+  // },
+  // {
+  //   id: 2,
+  //   namaPerusahaan: 'Siti Nurhaliza',
+  //   id_user: '14',
+  //   email: 'siti.nurhaliza@gmail.com',
+  //   verifed_at: 'Verified',
+  //   penanggungJawab: 'Siti Nurhaliza',
+  //   status: 'guru',
+  //   Terdaftar_pada: '2 feb 2020'
+  // },
+  // {
+  //   id: 3,
+  //   namaPerusahaan: 'Budi Santoso',
+  //   id_user: '13',
+  //   email: 'budi.santoso@gmail.com',
+  //   verifed_at: 'Verified',
+  //   penanggungJawab: 'Budi Santoso',
+  //   status: 'guru',
+  //   Terdaftar_pada: '2 sep 2024'
+  // },
+  // {
+  //   id: 4,
+  //   namaPerusahaan: 'Dewi Lestari',
+  //   id_user: '12',
+  //   email: 'dewi.lestari@gmail.com',
+  //   verifed_at: 'Unverified',
+  //   penanggungJawab: 'Dewi Lestari',
+  //   status: 'siswa',
+  //   Terdaftar_pada: '8 Marc 2024'
+  // },
+  // {
+  //   id: 5,
+  //   namaPerusahaan: 'Rudi Hermawan',
+  //   id_user: '11',
+  //   email: 'rudi.hermawan@gmail.com',
+  //   verifed_at: 'Verified',
+  //   penanggungJawab: 'Rudi Hermawan',
+  //   status: 'guru',
+  //   Terdaftar_pada: '7 jan 2024'
+  // },
 ];

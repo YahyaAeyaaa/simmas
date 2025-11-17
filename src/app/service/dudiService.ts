@@ -44,6 +44,7 @@ export interface CreateDudiData {
   deskripsi: string;
   kuotaMagang: number;
   status?: 'aktif' | 'nonaktif' | 'pending';
+  guruPenanggungJawabId?: number | null;
 }
 
 export interface UpdateDudiData extends CreateDudiData {
